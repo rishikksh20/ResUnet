@@ -62,4 +62,4 @@ def dice_coeff(input, target):
 
     loss = (2. * intersection + smooth) /(pred.sum(1) + truth.sum(1) + smooth)
 
-    return loss.mean().data[0]
+    return loss.mean().item()

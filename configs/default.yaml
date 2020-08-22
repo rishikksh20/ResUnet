@@ -1,0 +1,3 @@
+data:
+  train : "./data/training"
+  valid : "./data/validation"

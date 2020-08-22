@@ -6,13 +6,13 @@ import glob
 import os
 import torch
 from torchvision import transforms
-
+import hparams as hp
 
 
 class ImageDataset(Dataset):
     """Massachusetts Road and Building dataset"""
 
-    def __init__(self, hp, train = True, transform=None):
+    def __init__(self, train = True, transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with image paths
@@ -20,24 +20,20 @@ class ImageDataset(Dataset):
             root_dir (string): 'mass_roads', 'mass_roads_crop', or 'mass_buildings'
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        self.hp = hp
         self.train = train
-        self.path = hp.data.train if train else hp.data.validation
-        self.img_list = glob.glob(os.path.join(self.path, '**', '*.jpeg'), recursive=True)
+        self.path = hp.train if train else hp.valid
+        self.mask_list = glob.glob(os.path.join(self.path, 'mask_crop', '*.jpg'), recursive=True)
         self.transform = transform
 
     def __len__(self):
-        return len(self.img_path_df)
+        return len(self.mask_list)
 
     def __getitem__(self, idx):
-        imgpath = self.img_list[idx]
-        sat_img_name = os.path.join(imgpath)
-        sat_image = io.imread(sat_img_name)
+        maskpath = self.mask_list[idx]
+        image = io.imread(maskpath.replace("mask_crop", "input_crop"))
+        mask = io.imread(maskpath)
 
-        map_img_name = os.path.join(imgpath.replace("sat_img", "map_mask"))
-        map_image = io.imread(map_img_name)
-
-        sample = {'sat_img': sat_image, 'map_img': map_image}
+        sample = {'sat_img': image, 'map_img': mask}
 
         if self.transform:
             sample = self.transform(sample)

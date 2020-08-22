@@ -31,3 +31,4 @@ idea/*
 /trace_loss_nvidia.txt
 /conf
 /dataset/text/__pycache__
+/road_segmentation_ideal
