@@ -1,13 +1,10 @@
-# Download dataset
-# Crop the images
-# Save into appropriate folder
-import hparams as hp
 from PIL import Image
 import numpy as np
 import os
 import glob
 import tqdm
 import argparse
+from utils.hparams import HParam
 
 def load_image( infilename) :
     img = Image.open( infilename )
@@ -60,11 +57,17 @@ def crop_image_mask(image_dir, mask_dir, mask_path, X_points, Y_points, split_he
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', type=str, required=True,
+                        help="yaml file for configuration")
     parser.add_argument('-t', '--train', type=str, required=True,
                         help="Training Folder.")
     parser.add_argument('-v', '--valid', type=str, required=True,
                         help="Validation Folder")
     args = parser.parse_args()
+
+    hp = HParam(args.config)
+    with open(args.config, 'r') as f:
+        hp_str = ''.join(f.readlines())
 
     train_dir = args.train
     valid_dir = args.valid

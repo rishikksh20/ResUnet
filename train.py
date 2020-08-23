@@ -135,18 +135,7 @@ def main(hp, num_epochs, resume, name):
 
 
 def validation(valid_loader, model, criterion, logger, step):
-    """
 
-    Args:
-        train_loader:
-        model:
-        criterion:
-        optimizer:
-        epoch:
-
-    Returns:
-
-    """
     # logging accuracy and loss
     valid_acc = metrics.MetricTracker()
     valid_loss = metrics.MetricTracker()
