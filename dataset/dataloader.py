@@ -6,13 +6,12 @@ import glob
 import os
 import torch
 from torchvision import transforms
-import hparams as hp
 
 
 class ImageDataset(Dataset):
     """Massachusetts Road and Building dataset"""
 
-    def __init__(self, train = True, transform=None):
+    def __init__(self, hp, train = True, transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with image paths

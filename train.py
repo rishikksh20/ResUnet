@@ -1,30 +1,19 @@
 import warnings
 warnings.simplefilter("ignore", (UserWarning, FutureWarning))
-
+from utils.hparams import HParam
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 from dataset import dataloader
 from utils import metrics
 from core.res_unet import ResUnet
+from core.res_unet_plus import ResUnetPlusPlus
 from utils.logger import MyWriter
 import torch
 import argparse
-import shutil
 import os
-import hparams as hp
 
-def main(num_epochs, resume, name):
-    """
-
-    Args:
-        data_path:
-        batch_size:
-        num_epochs:
-
-    Returns:
-
-    """
+def main(hp, num_epochs, resume, name):
 
     checkpoint_dir = "{}/{}".format(hp.checkpoints, name)
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -32,7 +21,11 @@ def main(num_epochs, resume, name):
     os.makedirs("{}/{}".format(hp.log, name), exist_ok=True)
     writer = MyWriter("{}/{}".format(hp.log, name))
     # get model
-    model = ResUnet(3, 64).cuda()
+
+    if hp.RESNET_PLUS_PLUS:
+        model = ResUnetPlusPlus(3).cuda()
+    else:
+        model = ResUnet(3, 64).cuda()
 
 
     # set up binary cross entropy and dice loss
@@ -65,9 +58,9 @@ def main(num_epochs, resume, name):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     # get data
-    mass_dataset_train = dataloader.ImageDataset(transform=transforms.Compose([dataloader.ToTensorTarget()]))
+    mass_dataset_train = dataloader.ImageDataset(hp, transform=transforms.Compose([dataloader.ToTensorTarget()]))
 
-    mass_dataset_val = dataloader.ImageDataset(False,transform=transforms.Compose([dataloader.ToTensorTarget()]))
+    mass_dataset_val = dataloader.ImageDataset(hp, False,transform=transforms.Compose([dataloader.ToTensorTarget()]))
 
     # creating loaders
     train_dataloader = DataLoader(mass_dataset_train, batch_size=hp.batch_size, num_workers=2, shuffle=True)
@@ -188,22 +181,10 @@ def validation(valid_loader, model, criterion, logger, step):
     return {'valid_loss': valid_loss.avg, 'valid_acc': valid_acc.avg}
 
 
-# create a function to save the model state (https://github.com/pytorch/examples/blob/master/imagenet/main.py)
-def save_checkpoint(state, is_best, filename='../checkpoints/checkpoint.pth.tar'):
-    """
-    :param state:
-    :param is_best:
-    :param filename:
-    :return:
-    """
-    torch.save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, '../checkpoints/model_best.pth.tar')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Road and Building Extraction')
-
+    parser.add_argument('-c', '--config', type=str, required=True,
+                        help="yaml file for configuration")
     parser.add_argument('--epochs', default=75, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
@@ -213,4 +194,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(num_epochs=args.epochs, resume=args.resume, name=args.name)
+    hp = HParam(args.config)
+    with open(args.config, 'r') as f:
+        hp_str = ''.join(f.readlines())
+
+    main(hp, num_epochs=args.epochs, resume=args.resume, name=args.name)

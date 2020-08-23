@@ -1,3 +1,12 @@
-data:
-  train : "./data/training"
-  valid : "./data/validation"
+train: "/mnt/Karan/ResUnet/data/training"
+valid: "/mnt/Karan/ResUnet/data/testing"
+log: "logs"
+logging_step: 100
+validation_interval: 2000 # Save and valid have same interval
+checkpoints: "checkpoints"
+
+batch_size: 16
+lr: 0.001
+RESNET_PLUS_PLUS: True
+IMAGE_SIZE: 1500
+CROP_SIZE: 224

@@ -32,3 +32,4 @@ idea/*
 /conf
 /dataset/text/__pycache__
 /road_segmentation_ideal
+/hparams.py
