@@ -109,22 +109,21 @@ def main(num_epochs, resume, name):
             # backward
             loss.backward()
             optimizer.step()
-            step += 1
+
             train_acc.update(metrics.dice_coeff(outputs, labels), outputs.size(0))
             train_loss.update(loss.data.item(), outputs.size(0))
 
             # tensorboard logging
-            if idx % hp.logging_step == 0:
+            if step % hp.logging_step == 0:
                 writer.log_training(train_loss.avg, train_acc.avg, step)
                 loader.set_description('Training Loss: {:.4f} Acc: {:.4f}'.format(train_loss.avg, train_acc.avg))
 
             # Validatiuon
-            if idx % hp.validation_interval == 0:
+            if step % hp.validation_interval == 0:
                 valid_metrics = validation(val_dataloader, model, criterion, writer, step)
                 save_path = os.path.join(checkpoint_dir, '%s_checkpoint_%04d.pt'
                                          % (name, step))
                 # store best loss and save a model checkpoint
-                is_best = valid_metrics['valid_loss'] < best_loss
                 best_loss = min(valid_metrics['valid_loss'], best_loss)
                 torch.save({
                     'step': step,
@@ -135,6 +134,8 @@ def main(num_epochs, resume, name):
                     'optimizer': optimizer.state_dict()
                 }, save_path)
                 print("Saved checkpoint to: %s" % save_path)
+
+            step += 1
 
 
 
@@ -164,35 +165,6 @@ def validation(valid_loader, model, criterion, logger, step):
     for idx, data in enumerate(tqdm(valid_loader, desc='validation')):
 
         # get the inputs and wrap in Variable
-        if torch.cuda.is_available():
-            inputs = data['sat_img'].cuda()
-            labels = data['map_img'].cuda()
-        else:
-            inputs = data['sat_img']
-            labels = data['map_img']
-
-        # forward
-        # prob_map = model(inputs) # last activation was a sigmoid
-        # outputs = (prob_map > 0.3).float()
-        with torch.no_grad():
-            outputs = model(inputs)
-        # outputs = torch.nn.functional.sigmoid(outputs)
-
-        loss = criterion(outputs, labels)
-
-        valid_acc.update(metrics.dice_coeff(outputs, labels), outputs.size(0))
-        valid_loss.update(loss.data.item(), outputs.size(0))
-
-
-    logger.log_validation(valid_loss.avg, valid_acc.avg, step)
-
-    print('Validation Loss: {:.4f} Acc: {:.4f}'.format(valid_loss.avg, valid_acc.avg))
-    print()
-
-    # Iterate over data.
-    for idx, data in enumerate(tqdm(valid_loader, desc='validation')):
-
-        # get the inputs and wrap in Variable
         inputs = data['sat_img'].cuda()
         labels = data['map_img'].cuda()
 
@@ -200,10 +172,18 @@ def validation(valid_loader, model, criterion, logger, step):
         # forward
         # prob_map = model(inputs) # last activation was a sigmoid
         # outputs = (prob_map > 0.3).float()
-        with torch.no_grad():
-            outputs = model(inputs)
-        logger.log_images(inputs[0].cpu().numpy(), labels[0].cpu().numpy(), outputs[0].cpu().numpy(), step)
-        break
+        outputs = model(inputs)
+        # outputs = torch.nn.functional.sigmoid(outputs)
+
+        loss = criterion(outputs, labels)
+
+        valid_acc.update(metrics.dice_coeff(outputs, labels), outputs.size(0))
+        valid_loss.update(loss.data.item(), outputs.size(0))
+        if idx == 0:
+            logger.log_images(inputs.cpu(), labels.cpu(), outputs.cpu(), step)
+    logger.log_validation(valid_loss.avg, valid_acc.avg, step)
+
+    print('Validation Loss: {:.4f} Acc: {:.4f}'.format(valid_loss.avg, valid_acc.avg))
     model.train()
     return {'valid_loss': valid_loss.avg, 'valid_acc': valid_acc.avg}
 
