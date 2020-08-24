@@ -3,6 +3,20 @@ Unofficial Pytorch implementation of following papers :
 * [Deep ResUnet](https://arxiv.org/pdf/1711.10684.pdf)
 * [ResUnet ++](https://arxiv.org/pdf/1911.07067.pdf)
 
+## Note
+* This repo written for experimentation (fun) purpose and heavily hard coded, so avoid to use this in production environement.
+* I only wrote ResUnet and ResUnet++ model, Unet is pre-implemented and borrows from this [repo](https://github.com/jeffwen/road_building_extraction).
+* Use your own pre-processing and dataloader, dataloader and pre-processing of this repo written for specific use case.
+* This repo only tested on [Massachusetts Roads Dataset](https://www.cs.toronto.edu/~vmnih/data/).
+
+## Pre-processing
+* This pre-processing is for specific use case and follows strict directory structure.
+````buildoutcfg
+python preprocess.py --config "config/default.yaml" --train training_files_dir --valid validation_files_dir
+````
+* Training and validation directories should contain two folders `input` for input images and `output` for target images. And all images are 1500 * 1500 pixel of size.
+* Pre-processing crop each input and target image into several fixed size (in this case `224 * 224`) small cropped images and saved into `input_crop` and `mask_crop` respectively.
+* You can change training and validation dump directories from config file i.e. `configs/default.yaml`.
 ## Training
 ```buildoutcfg
 python train.py --name "default" --config "config/default.yaml"
