@@ -14,8 +14,8 @@ Unofficial Pytorch implementation of following papers :
 ````buildoutcfg
 python preprocess.py --config "config/default.yaml" --train training_files_dir --valid validation_files_dir
 ````
-* Training and validation directories should contain two folders `input` for input images and `output` for target images. And all images are 1500 * 1500 pixel of size.
-* Pre-processing crop each input and target image into several fixed size (in this case `224 * 224`) small cropped images and saved into `input_crop` and `mask_crop` respectively.
+* Training and validation directories passed in `args` above should contain two folders `input` for input images and `output` for target images. And all images are of fixed square size (in this case `1500 * 1500` pixels).
+* Pre-processing crop each input and target image into several fixed size (in this case `224 * 224`) small cropped images and saved into `input_crop` and `mask_crop` respectively on training and validation dump directories as in `config` file.
 * You can change training and validation dump directories from config file i.e. `configs/default.yaml`.
 ## Training
 ```buildoutcfg
