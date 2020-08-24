@@ -4,7 +4,7 @@ Unofficial Pytorch implementation of following papers :
 * [ResUnet ++](https://arxiv.org/pdf/1911.07067.pdf)
 
 ## Note
-* This repo written for experimentation (fun) purpose and heavily hard coded, so avoid to use this in production environement.
+* This repo written for experimentation (fun) purpose and heavily hard coded, so avoid to use this as it is in production environement.
 * I only wrote ResUnet and ResUnet++ model, Unet is pre-implemented and borrows from this [repo](https://github.com/jeffwen/road_building_extraction).
 * Use your own pre-processing and dataloader, dataloader and pre-processing of this repo written for specific use case.
 * This repo only tested on [Massachusetts Roads Dataset](https://www.cs.toronto.edu/~vmnih/data/).
