@@ -11,7 +11,7 @@ from torchvision import transforms
 class ImageDataset(Dataset):
     """Massachusetts Road and Building dataset"""
 
-    def __init__(self, hp, train = True, transform=None):
+    def __init__(self, hp, train=True, transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with image paths
@@ -21,7 +21,9 @@ class ImageDataset(Dataset):
         """
         self.train = train
         self.path = hp.train if train else hp.valid
-        self.mask_list = glob.glob(os.path.join(self.path, 'mask_crop', '*.jpg'), recursive=True)
+        self.mask_list = glob.glob(
+            os.path.join(self.path, "mask_crop", "*.jpg"), recursive=True
+        )
         self.transform = transform
 
     def __len__(self):
@@ -32,7 +34,7 @@ class ImageDataset(Dataset):
         image = io.imread(maskpath.replace("mask_crop", "input_crop"))
         mask = io.imread(maskpath)
 
-        sample = {'sat_img': image, 'map_img': mask}
+        sample = {"sat_img": image, "map_img": mask}
 
         if self.transform:
             sample = self.transform(sample)
@@ -40,28 +42,32 @@ class ImageDataset(Dataset):
         return sample
 
 
-
-
 class ToTensorTarget(object):
     """Convert ndarrays in sample to Tensors."""
 
     def __call__(self, sample):
-        sat_img, map_img = sample['sat_img'], sample['map_img']
+        sat_img, map_img = sample["sat_img"], sample["map_img"]
 
         # swap color axis because
         # numpy image: H x W x C
         # torch image: C X H X W
 
-        return {'sat_img': transforms.functional.to_tensor(sat_img),
-                'map_img': torch.from_numpy(map_img).unsqueeze(0).float().div(255)} # unsqueeze for the channel dimension
+        return {
+            "sat_img": transforms.functional.to_tensor(sat_img),
+            "map_img": torch.from_numpy(map_img).unsqueeze(0).float().div(255),
+        }  # unsqueeze for the channel dimension
 
 
 class NormalizeTarget(transforms.Normalize):
     """Normalize a tensor and also return the target"""
 
     def __call__(self, sample):
-        return {'sat_img': transforms.functional.normalize(sample['sat_img'], self.mean, self.std),
-                'map_img': sample['map_img']}
+        return {
+            "sat_img": transforms.functional.normalize(
+                sample["sat_img"], self.mean, self.std
+            ),
+            "map_img": sample["map_img"],
+        }
 
 
 # https://discuss.pytorch.org/t/simple-way-to-inverse-transform-normalization/4821/3

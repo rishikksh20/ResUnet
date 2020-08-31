@@ -5,12 +5,14 @@ import os
 import glob
 import tqdm
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     train_dir = hp.train
     valid_dir = hp.valid
 
     train_mask_crop_dir = os.path.join(train_dir, "mask_crop")
-    mask_files = glob.glob(os.path.join(train_mask_crop_dir, '**', '*.jpg'), recursive=True)
+    mask_files = glob.glob(
+        os.path.join(train_mask_crop_dir, "**", "*.jpg"), recursive=True
+    )
 
     noisy_mask_files = os.path.join(train_dir, "noisy")
     os.makedirs(noisy_mask_files, exist_ok=True)
@@ -23,7 +25,7 @@ if __name__ == '__main__':
         extrema = img.convert("L").getextrema()
         if extrema == (0, 0):
             count = count + 1
-            shutil.copy2(f , f.replace("mask_crop", "noisy"))
+            shutil.copy2(f, f.replace("mask_crop", "noisy"))
             ## If file exists, delete it ##
             if os.path.isfile(f):
                 os.remove(f)

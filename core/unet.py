@@ -7,29 +7,71 @@ class encoding_block(nn.Module):
     """
     Convolutional batch norm block with relu activation (main block used in the encoding steps)
     """
-    def __init__(self, in_size, out_size, kernel_size=3, padding=0, stride=1, dilation=1, batch_norm=True, dropout=False):
+
+    def __init__(
+        self,
+        in_size,
+        out_size,
+        kernel_size=3,
+        padding=0,
+        stride=1,
+        dilation=1,
+        batch_norm=True,
+        dropout=False,
+    ):
         super().__init__()
 
         if batch_norm:
 
             # reflection padding for same size output as input (reflection padding has shown better results than zero padding)
-            layers = [nn.ReflectionPad2d(padding=(kernel_size -1)//2),
-                      nn.Conv2d(in_size, out_size, kernel_size=kernel_size, padding=padding, stride=stride, dilation=dilation),
-                      nn.PReLU(),
-                      nn.BatchNorm2d(out_size),
-                      nn.ReflectionPad2d(padding=(kernel_size - 1)//2),
-                      nn.Conv2d(out_size, out_size, kernel_size=kernel_size, padding=padding, stride=stride, dilation=dilation),
-                      nn.PReLU(),
-                      nn.BatchNorm2d(out_size),
-                      ]
+            layers = [
+                nn.ReflectionPad2d(padding=(kernel_size - 1) // 2),
+                nn.Conv2d(
+                    in_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                    stride=stride,
+                    dilation=dilation,
+                ),
+                nn.PReLU(),
+                nn.BatchNorm2d(out_size),
+                nn.ReflectionPad2d(padding=(kernel_size - 1) // 2),
+                nn.Conv2d(
+                    out_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                    stride=stride,
+                    dilation=dilation,
+                ),
+                nn.PReLU(),
+                nn.BatchNorm2d(out_size),
+            ]
 
         else:
-            layers = [nn.ReflectionPad2d(padding=(kernel_size - 1)//2),
-                      nn.Conv2d(in_size, out_size, kernel_size=kernel_size, padding=padding, stride=stride, dilation=dilation),
-                      nn.PReLU(),
-                      nn.ReflectionPad2d(padding=(kernel_size - 1)//2),
-                      nn.Conv2d(out_size, out_size, kernel_size=kernel_size, padding=padding, stride=stride, dilation=dilation),
-                      nn.PReLU(),]
+            layers = [
+                nn.ReflectionPad2d(padding=(kernel_size - 1) // 2),
+                nn.Conv2d(
+                    in_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                    stride=stride,
+                    dilation=dilation,
+                ),
+                nn.PReLU(),
+                nn.ReflectionPad2d(padding=(kernel_size - 1) // 2),
+                nn.Conv2d(
+                    out_size,
+                    out_size,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                    stride=stride,
+                    dilation=dilation,
+                ),
+                nn.PReLU(),
+            ]
 
         if dropout:
             layers.append(nn.Dropout())
@@ -49,8 +91,10 @@ class decoding_block(nn.Module):
         super().__init__()
 
         if upsampling:
-            self.up = nn.Sequential(nn.Upsample(mode='bilinear', scale_factor=2),
-                                    nn.Conv2d(in_size, out_size, kernel_size=1))
+            self.up = nn.Sequential(
+                nn.Upsample(mode="bilinear", scale_factor=2),
+                nn.Conv2d(in_size, out_size, kernel_size=1),
+            )
 
         else:
             self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=2, stride=2)
@@ -61,7 +105,7 @@ class decoding_block(nn.Module):
 
         output2 = self.up(input2)
 
-        output1 = nn.functional.upsample(input1, output2.size()[2:], mode='bilinear')
+        output1 = nn.functional.upsample(input1, output2.size()[2:], mode="bilinear")
 
         return self.conv(torch.cat([output1, output2], 1))
 
@@ -70,6 +114,7 @@ class UNet(nn.Module):
     """
     Main UNet architecture
     """
+
     def __init__(self, num_classes=1):
         super().__init__()
 
@@ -126,7 +171,9 @@ class UNet(nn.Module):
         decode1 = self.decode1(conv1, decode2)
 
         # final
-        final = nn.functional.upsample(self.final(decode1), input.size()[2:], mode='bilinear')
+        final = nn.functional.upsample(
+            self.final(decode1), input.size()[2:], mode="bilinear"
+        )
 
         return final
 
@@ -135,6 +182,7 @@ class UNetSmall(nn.Module):
     """
     Main UNet architecture
     """
+
     def __init__(self, num_classes=1):
         super().__init__()
 
@@ -191,6 +239,8 @@ class UNetSmall(nn.Module):
         decode1 = self.decode1(conv1, decode2)
 
         # final
-        final = nn.functional.upsample(self.final(decode1), input.size()[2:], mode='bilinear')
+        final = nn.functional.upsample(
+            self.final(decode1), input.size()[2:], mode="bilinear"
+        )
 
         return final
