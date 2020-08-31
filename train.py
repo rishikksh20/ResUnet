@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter("ignore", (UserWarning, FutureWarning))
 from utils.hparams import HParam
 from torch.utils.data import DataLoader
@@ -13,6 +14,7 @@ import torch
 import argparse
 import os
 
+
 def main(hp, num_epochs, resume, name):
 
     checkpoint_dir = "{}/{}".format(hp.checkpoints, name)
@@ -26,7 +28,6 @@ def main(hp, num_epochs, resume, name):
         model = ResUnetPlusPlus(3).cuda()
     else:
         model = ResUnet(3, 64).cuda()
-
 
     # set up binary cross entropy and dice loss
     criterion = metrics.BCEDiceLoss()
@@ -48,28 +49,40 @@ def main(hp, num_epochs, resume, name):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume)
 
-            start_epoch = checkpoint['epoch']
+            start_epoch = checkpoint["epoch"]
 
-            best_loss = checkpoint['best_loss']
-            model.load_state_dict(checkpoint['state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            print("=> loaded checkpoint '{}' (epoch {})".format(resume, checkpoint['epoch']))
+            best_loss = checkpoint["best_loss"]
+            model.load_state_dict(checkpoint["state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer"])
+            print(
+                "=> loaded checkpoint '{}' (epoch {})".format(
+                    resume, checkpoint["epoch"]
+                )
+            )
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     # get data
-    mass_dataset_train = dataloader.ImageDataset(hp, transform=transforms.Compose([dataloader.ToTensorTarget()]))
+    mass_dataset_train = dataloader.ImageDataset(
+        hp, transform=transforms.Compose([dataloader.ToTensorTarget()])
+    )
 
-    mass_dataset_val = dataloader.ImageDataset(hp, False,transform=transforms.Compose([dataloader.ToTensorTarget()]))
+    mass_dataset_val = dataloader.ImageDataset(
+        hp, False, transform=transforms.Compose([dataloader.ToTensorTarget()])
+    )
 
     # creating loaders
-    train_dataloader = DataLoader(mass_dataset_train, batch_size=hp.batch_size, num_workers=2, shuffle=True)
-    val_dataloader = DataLoader(mass_dataset_val, batch_size=1, num_workers=2, shuffle=False)
+    train_dataloader = DataLoader(
+        mass_dataset_train, batch_size=hp.batch_size, num_workers=2, shuffle=True
+    )
+    val_dataloader = DataLoader(
+        mass_dataset_val, batch_size=1, num_workers=2, shuffle=False
+    )
 
     step = 0
     for epoch in range(start_epoch, num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        print("Epoch {}/{}".format(epoch, num_epochs - 1))
+        print("-" * 10)
 
         # step the learning rate scheduler
         lr_scheduler.step()
@@ -84,9 +97,8 @@ def main(hp, num_epochs, resume, name):
         for idx, data in enumerate(loader):
 
             # get the inputs and wrap in Variable
-            inputs = data['sat_img'].cuda()
-            labels = data['map_img'].cuda()
-
+            inputs = data["sat_img"].cuda()
+            labels = data["map_img"].cuda()
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -95,7 +107,7 @@ def main(hp, num_epochs, resume, name):
             # prob_map = model(inputs) # last activation was a sigmoid
             # outputs = (prob_map > 0.3).float()
             outputs = model(inputs)
-            #outputs = torch.nn.functional.sigmoid(outputs)
+            # outputs = torch.nn.functional.sigmoid(outputs)
 
             loss = criterion(outputs, labels)
 
@@ -109,29 +121,36 @@ def main(hp, num_epochs, resume, name):
             # tensorboard logging
             if step % hp.logging_step == 0:
                 writer.log_training(train_loss.avg, train_acc.avg, step)
-                loader.set_description('Training Loss: {:.4f} Acc: {:.4f}'.format(train_loss.avg, train_acc.avg))
+                loader.set_description(
+                    "Training Loss: {:.4f} Acc: {:.4f}".format(
+                        train_loss.avg, train_acc.avg
+                    )
+                )
 
             # Validatiuon
             if step % hp.validation_interval == 0:
-                valid_metrics = validation(val_dataloader, model, criterion, writer, step)
-                save_path = os.path.join(checkpoint_dir, '%s_checkpoint_%04d.pt'
-                                         % (name, step))
+                valid_metrics = validation(
+                    val_dataloader, model, criterion, writer, step
+                )
+                save_path = os.path.join(
+                    checkpoint_dir, "%s_checkpoint_%04d.pt" % (name, step)
+                )
                 # store best loss and save a model checkpoint
-                best_loss = min(valid_metrics['valid_loss'], best_loss)
-                torch.save({
-                    'step': step,
-                    'epoch':epoch,
-                    'arch': 'ResUnet',
-                    'state_dict': model.state_dict(),
-                    'best_loss': best_loss,
-                    'optimizer': optimizer.state_dict()
-                }, save_path)
+                best_loss = min(valid_metrics["valid_loss"], best_loss)
+                torch.save(
+                    {
+                        "step": step,
+                        "epoch": epoch,
+                        "arch": "ResUnet",
+                        "state_dict": model.state_dict(),
+                        "best_loss": best_loss,
+                        "optimizer": optimizer.state_dict(),
+                    },
+                    save_path,
+                )
                 print("Saved checkpoint to: %s" % save_path)
 
             step += 1
-
-
-
 
 
 def validation(valid_loader, model, criterion, logger, step):
@@ -144,12 +163,11 @@ def validation(valid_loader, model, criterion, logger, step):
     model.eval()
 
     # Iterate over data.
-    for idx, data in enumerate(tqdm(valid_loader, desc='validation')):
+    for idx, data in enumerate(tqdm(valid_loader, desc="validation")):
 
         # get the inputs and wrap in Variable
-        inputs = data['sat_img'].cuda()
-        labels = data['map_img'].cuda()
-
+        inputs = data["sat_img"].cuda()
+        labels = data["map_img"].cuda()
 
         # forward
         # prob_map = model(inputs) # last activation was a sigmoid
@@ -165,26 +183,36 @@ def validation(valid_loader, model, criterion, logger, step):
             logger.log_images(inputs.cpu(), labels.cpu(), outputs.cpu(), step)
     logger.log_validation(valid_loss.avg, valid_acc.avg, step)
 
-    print('Validation Loss: {:.4f} Acc: {:.4f}'.format(valid_loss.avg, valid_acc.avg))
+    print("Validation Loss: {:.4f} Acc: {:.4f}".format(valid_loss.avg, valid_acc.avg))
     model.train()
-    return {'valid_loss': valid_loss.avg, 'valid_acc': valid_acc.avg}
+    return {"valid_loss": valid_loss.avg, "valid_acc": valid_acc.avg}
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Road and Building Extraction')
-    parser.add_argument('-c', '--config', type=str, required=True,
-                        help="yaml file for configuration")
-    parser.add_argument('--epochs', default=75, type=int, metavar='N',
-                        help='number of total epochs to run')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                        help='path to latest checkpoint (default: none)')
-    parser.add_argument('--name', default='default', type=str,
-                        help='Experiment name')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Road and Building Extraction")
+    parser.add_argument(
+        "-c", "--config", type=str, required=True, help="yaml file for configuration"
+    )
+    parser.add_argument(
+        "--epochs",
+        default=75,
+        type=int,
+        metavar="N",
+        help="number of total epochs to run",
+    )
+    parser.add_argument(
+        "--resume",
+        default="",
+        type=str,
+        metavar="PATH",
+        help="path to latest checkpoint (default: none)",
+    )
+    parser.add_argument("--name", default="default", type=str, help="Experiment name")
 
     args = parser.parse_args()
 
     hp = HParam(args.config)
-    with open(args.config, 'r') as f:
-        hp_str = ''.join(f.readlines())
+    with open(args.config, "r") as f:
+        hp_str = "".join(f.readlines())
 
     main(hp, num_epochs=args.epochs, resume=args.resume, name=args.name)
