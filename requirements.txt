@@ -1,0 +1,12 @@
+torch==1.6.0
+torchvision
+matplotlib==2.1.0
+tensorboardX
+numpy==1.16.3
+librosa==0.7.2
+inflect==0.2.5
+scipy==1.0.0
+Unidecode==1.0.22
+pillow
+tqdm
+configargparse
