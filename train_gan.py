@@ -2,10 +2,8 @@ import warnings
 import numpy as np
 warnings.simplefilter("ignore", (UserWarning, FutureWarning))
 from utils.hparams import HParam
-from torch.utils.data import DataLoader
-from torchvision import transforms
 from tqdm import tqdm
-from dataset import dataloader
+from dataset.mel_dataset import create_dataloader
 from utils.utils import get_commit_hash
 from core.res_unet import ResUnet
 from core.res_unet_plus import ResUnetPlusPlus
@@ -64,22 +62,8 @@ def main(hp, num_epochs, resume, name):
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
-    # get data
-    mass_dataset_train = dataloader.ImageDataset(
-        hp, transform=transforms.Compose([dataloader.ToTensorTarget()])
-    )
-
-    mass_dataset_val = dataloader.ImageDataset(
-        hp, False, transform=transforms.Compose([dataloader.ToTensorTarget()])
-    )
-
-    # creating loaders
-    train_dataloader = DataLoader(
-        mass_dataset_train, batch_size=hp.batch_size, num_workers=2, shuffle=True
-    )
-    val_dataloader = DataLoader(
-        mass_dataset_val, batch_size=1, num_workers=2, shuffle=False
-    )
+    trainloader = create_dataloader(hp, True)
+    validloader = create_dataloader(hp, False)
 
 
     model_g.train()
@@ -96,7 +80,7 @@ def main(hp, num_epochs, resume, name):
         avg_g_loss = []
         avg_d_loss = []
         avg_adv_loss = []
-        loader = tqdm(train_dataloader, desc="training")
+        loader = tqdm(trainloader, desc="training")
         for idx, data in enumerate(loader):
 
             # get the inputs and wrap in Variable
@@ -177,7 +161,7 @@ def main(hp, num_epochs, resume, name):
             # Validatiuon
             if step % hp.validation_interval == 0:
                 valid_metrics = validation(
-                    val_dataloader, model_g, model_d, criterion_l1, criterion_mse, writer, step
+                    validloader, model_g, model_d, criterion_l1, criterion_mse, hp, writer, step
                 )
                 save_path = os.path.join(checkpoint_dir, '%s_%s_%04d.pt'
                                          % (args.name, githash, epoch))
@@ -196,7 +180,7 @@ def main(hp, num_epochs, resume, name):
             step += 1
 
 
-def validation(val_dataloader, model_g, model_d, criterion_l1, criterion_mse, writer, step):
+def validation(val_dataloader, model_g, model_d, criterion_l1, criterion_mse, hp, writer, step):
 
 
     # switch to evaluate mode
