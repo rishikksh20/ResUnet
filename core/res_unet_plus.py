@@ -51,7 +51,7 @@ class ResUnetPlusPlus(nn.Module):
 
         self.aspp_out = ASPP(filters[1], filters[0])
 
-        self.output_layer = nn.Sequential(nn.Conv2d(filters[0], 1, 1), nn.Sigmoid())
+        self.output_layer = nn.Sequential(nn.Conv2d(filters[0], 1, 1)) # , nn.Sigmoid())
 
     def forward(self, x):
         x1 = self.input_layer(x) + self.input_skip(x)

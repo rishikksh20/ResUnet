@@ -33,7 +33,7 @@ class ResUnet(nn.Module):
 
         self.output_layer = nn.Sequential(
             nn.Conv2d(filters[0], 1, 1, 1),
-            nn.Sigmoid(),
+           # nn.Sigmoid(),
         )
 
     def forward(self, x):

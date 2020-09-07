@@ -1,3 +1,45 @@
+data:
+  input_dir: "./data/gta"
+  output_dir: "./data/mels"
+  valid_input_dir: "./data/valid_gta"
+
+train:
+  rep_discriminator: 1
+  discriminator_train_start_steps: 10000
+  num_workers: 8
+  batch_size: 16
+  optimizer: 'adam'
+  adam:
+    lr: 0.0001
+    beta1: 0.5
+    beta2: 0.9
+---
+audio:
+  n_mel_channels: 80
+  segment_length: 16000
+  pad_short: 2000
+  filter_length: 1024
+  hop_length: 256 # WARNING: this can't be changed.
+  win_length: 1024
+  sampling_rate: 22050
+  mel_fmin: 0.0
+  mel_fmax: 8000.0
+
+model:
+  feat_match: 10.0
+  lambda_adv: 2.5
+  use_subband_stft_loss: False
+  feat_loss: False
+  out_channels: 1
+  generator_ratio: [8, 8, 4] # for 256 hop size and 22050 sample rate
+  mult: 256
+  n_residual_layers: 4
+  num_D : 3
+  ndf : 16
+  n_layers: 3
+  downsampling_factor: 4
+  disc_out: 512
+
 train: "/mnt/Karan/ResUnet/data/training"
 valid: "/mnt/Karan/ResUnet/data/testing"
 log: "logs"
@@ -7,6 +49,6 @@ checkpoints: "checkpoints"
 
 batch_size: 16
 lr: 0.001
-RESNET_PLUS_PLUS: True
+RESNET_PLUS_PLUS: False
 IMAGE_SIZE: 1500
 CROP_SIZE: 224
