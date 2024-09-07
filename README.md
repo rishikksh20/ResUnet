@@ -1,4 +1,4 @@
-# Deep ResUnet and ResUnet ++ 
+# Deep ResUnet and ResUnet ++ (Not Maintained)
 Unofficial Pytorch implementation of following papers :
 * [Deep ResUnet](https://arxiv.org/pdf/1711.10684.pdf)
 * [ResUnet ++](https://arxiv.org/pdf/1911.07067.pdf)
